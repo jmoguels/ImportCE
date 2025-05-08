@@ -224,14 +224,14 @@ jobs:
           echo "copado-list=$COPADO_LIST" >> $GITHUB_OUTPUT
 
       - name: Upload Copado Import List as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: copado-component-list
           path: copado_import_list.txt
           
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
