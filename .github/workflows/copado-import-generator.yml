@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Fetch all history to properly identify changed files
 
@@ -223,37 +223,25 @@ jobs:
           COPADO_LIST=$(cat copado_import_list.txt)
           echo "copado-list=$COPADO_LIST" >> $GITHUB_OUTPUT
 
-      - name: Upload Copado Import List as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: copado-component-list
-          path: copado_import_list.txt
+      # Skip artifact upload for now as it's causing errors
+      # Instead, just save the file and focus on PR comment
+      - name: Save component list for PR comment
+        run: |
+          mkdir -p ./artifacts
+          cp copado_import_list.txt ./artifacts/
           
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const fs = require('fs');
-            try {
-              const list = fs.readFileSync('copado_import_list.txt', 'utf8');
-              const commentBody = `## Copado Import Component List
-            
-            This list can be copied and pasted into Copado Essentials' "Import Component Selections" feature:
-            
-            \`\`\`
-            ${list}
-            \`\`\`
-            
-            You can access this in Copado by navigating to More > Import Component Selections`;
-              
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: commentBody
-              });
-            } catch (error) {
-              console.log("Error reading file:", error);
-            }
+        run: |
+          # Read the component list file
+          COMPONENT_LIST=$(cat copado_import_list.txt)
+          
+          # Create the comment body
+          COMMENT_BODY="## Copado Import Component List\n\nThis list can be copied and pasted into Copado Essentials' \"Import Component Selections\" feature:\n\n\`\`\`\n$COMPONENT_LIST\n\`\`\`\n\nYou can access this in Copado by navigating to More > Import Component Selections"
+          
+          # Use the GitHub REST API to post the comment
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": \"$COMMENT_BODY\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
