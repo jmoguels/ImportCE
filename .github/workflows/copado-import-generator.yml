@@ -223,25 +223,23 @@ jobs:
           COPADO_LIST=$(cat copado_import_list.txt)
           echo "copado-list=$COPADO_LIST" >> $GITHUB_OUTPUT
 
-      # Skip artifact upload for now as it's causing errors
-      # Instead, just save the file and focus on PR comment
-      - name: Save component list for PR comment
+      - name: Display Component List for Copado Import
         run: |
-          mkdir -p ./artifacts
-          cp copado_import_list.txt ./artifacts/
+          echo "================================================================="
+          echo "                     COPADO IMPORT COMPONENT LIST                "
+          echo "================================================================="
+          echo ""
+          echo "Copy everything between the START and END markers below:"
+          echo ""
+          echo "---------------------START COPY FROM HERE----------------------"
+          cat copado_import_list.txt
+          echo "----------------------END COPY HERE---------------------------"
+          echo ""
+          echo "Paste this list into Copado: More > Import Component Selections"
           
-      - name: Comment on PR
+      - name: Skip PR Comment (permission issue)
         if: github.event_name == 'pull_request'
         run: |
-          # Read the component list file
-          COMPONENT_LIST=$(cat copado_import_list.txt)
-          
-          # Create the comment body
-          COMMENT_BODY="## Copado Import Component List\n\nThis list can be copied and pasted into Copado Essentials' \"Import Component Selections\" feature:\n\n\`\`\`\n$COMPONENT_LIST\n\`\`\`\n\nYou can access this in Copado by navigating to More > Import Component Selections"
-          
-          # Use the GitHub REST API to post the comment
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d "{\"body\": \"$COMMENT_BODY\"}" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+          echo "Skipping PR comment due to permission limitations"
+          echo "Please check the 'Display Component List for Copado Import' step in the logs"
+          echo "and copy the component list from there."
